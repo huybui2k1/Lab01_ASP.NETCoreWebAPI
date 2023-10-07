@@ -18,8 +18,9 @@ namespace ProjectManagermentWebAPI.Controllers
 
         // POST api/<ProductsControllers>
         [HttpPost]
-        public IActionResult PostProduct (Product p )
+        public IActionResult PostProduct(Product p )
         {
+
             repository.SaveProduct(p);
             return NoContent();
         }
