@@ -9,6 +9,9 @@
 <p>
     <a asp-action="Create">Create New</a>
 </p>
+<div class="alert alert-danger">
+    @TempData["Message"]
+</div>
 <table class="table">
     <thead>
         <tr>
@@ -49,9 +52,13 @@
                 @Html.DisplayFor(modelItem => item.UnitPrice)
             </td>
             <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+                @Html.ActionLink("Edit", "Edit", new {  id=item.ProductId  }) |
+                @Html.ActionLink("Details", "Details", new {  id=item.ProductId}) |
+                    @using (Html.BeginForm("Delete","Product",new {id = item.ProductId }, FormMethod.Post))
+                    {
+                        <input type="submit" value="Delete" />
+                    }
+                @Html.ActionLink("Delete", "Delete", new {  id=item.ProductId  })
             </td>
         </tr>
 }

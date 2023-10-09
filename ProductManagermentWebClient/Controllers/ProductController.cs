@@ -1,6 +1,7 @@
 ﻿using BusinessObjects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -8,19 +9,19 @@ namespace ProductManagermentWebClient.Controllers
 {
     public class ProductController : Controller
     {
-        private readonly HttpClient client = null;
+        private readonly HttpClient _httpClient = null;
         private string ProductApiUrl = "";
         public ProductController() {
 
-            client = new HttpClient();
-            var contectType = new MediaTypeWithQualityHeaderValue("application/json");
-            client.DefaultRequestHeaders.Accept.Add(contectType);
+            _httpClient = new HttpClient();
+            var contentType = new MediaTypeWithQualityHeaderValue("application/json");
+            _httpClient.DefaultRequestHeaders.Accept.Add(contentType);
             ProductApiUrl = "https://localhost:7083/api/ProductsControllers";
         }
         // GET: ProductController
         public async Task<IActionResult> Index()
         {
-            HttpResponseMessage response = await client.GetAsync(ProductApiUrl);
+            HttpResponseMessage response = await _httpClient.GetAsync(ProductApiUrl);
             string strData = await response.Content.ReadAsStringAsync();
             var options = new JsonSerializerOptions
             {
@@ -46,58 +47,99 @@ namespace ProductManagermentWebClient.Controllers
         // POST: ProductController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> Create(Product p)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                string strData = JsonSerializer.Serialize(p);
+                var contentData = new StringContent(strData,System.Text.Encoding.UTF8,"application/json");
+                HttpResponseMessage res = await _httpClient.PostAsync(ProductApiUrl, contentData);
+                if (res.IsSuccessStatusCode)
+                {
+                    TempData["Message"] = "product inserted successfully";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    TempData["Message"] = "Error while call Web API";
+                }
             }
-            catch
-            {
-                return View();
-            }
+            return View(p);
         }
-
+        [HttpGet]
         // GET: ProductController/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
+            HttpResponseMessage res = await _httpClient.GetAsync($"{ProductApiUrl}/{id}");
+            if (res.IsSuccessStatusCode)
+            {
+                string strData = await res.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                };
+                Product p = JsonSerializer.Deserialize<Product>(strData,options);
+                return View(p);
+            }
             return View();
         }
 
         // POST: ProductController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> Edit(int id, Product p)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                string strData = JsonSerializer.Serialize(p);
+                var contentData = new StringContent(strData, System.Text.Encoding.UTF8, "application/json");
+               HttpResponseMessage res = await _httpClient.PutAsync($"{ProductApiUrl}/{strData}", contentData);
+                if (res.IsSuccessStatusCode)
+                {
+                    TempData["Message"] = "Product updated successfully";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    TempData["Message"] = "Error while call Web API";
+                }
             }
-            catch
-            {
-                return View();
-            }
+            return View(p);
         }
 
         // GET: ProductController/Delete/5
-        public ActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+           HttpResponseMessage res = await _httpClient.GetAsync($"{ProductApiUrl}/{id}");
+            if (res.IsSuccessStatusCode)
+            {
+                string strData = await res.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                Product p = JsonSerializer.Deserialize<Product>(strData, options);
+                return View(p);
+            }
             return View();
         }
 
         // POST: ProductController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<IActionResult> Delete(int id, IFormCollection collection)
         {
-            try
+            HttpResponseMessage res = await _httpClient.DeleteAsync($"{ProductApiUrl}/{id}");
+            if (res.IsSuccessStatusCode)
             {
+                TempData["Message"] = "Product deleted successfully";
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            else
             {
-                return View();
+                TempData["Message"] = "Error while call Web API";
             }
+            return RedirectToAction(nameof(Index));
         }
     }
 }
